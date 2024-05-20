@@ -10,82 +10,67 @@ import RealmSwift
 import Alamofire
 
 struct ContentView: View {
-    // 投稿した履歴が入る配列
-    @State private var historyDataArray: [HistoryData] = []
-    // API通信するmodel
-    private let baseRequestAPIModel = BaseRequestAPIModel()
-    
-    var body: some View {
-        List {
-            ForEach(historyDataArray, id: \.self) { historyData in
-                HistoryRowView(historyData: historyData)
-            }
-            .onAppear {
-                refreshData()
-            }
-        }
-        .pullToRefresh(isShowing: $isRefreshing) {
-            refreshData()
-        }
+    init() {
+        UINavigationBar.appearance().titleTextAttributes = [.font : UIFont(name: "Georgia", size: 26)!]
     }
-    
-    @State private var isRefreshing = false
-    
-    private func refreshData() {
-        let url = "http://localhost:8888/KeepFood/iOS/Controller/ShopingHistoryController.php"
-        AF.request(url).responseData { response in
-            switch response.result {
-            case.success(let data):
-                do {
-                    let decoder = JSONDecoder()
-                    self.historyDataArray = try decoder.decode([HistoryData].self, from: data)
-                } catch {
-                    print("JSONデコードエラー: \(error)")
+    // タブの選択項目を保持する
+    @State var SelectTab = 1
+    var body: some View {
+        TabView(selection: $SelectTab) {
+            NavigationView {
+                ScrollView(.vertical, showsIndicators: false) {
+                    // VStackで作成したViewを構築
+                    VStack {
+                        RcHistoryController()
+                    }
                 }
-                self.isRefreshing = false
-            case.failure(let error):
-                print("Error: \(error)")
-                self.isRefreshing = false
+                // タイトルと左右のアイコンを指定
+                    .navigationBarTitle(Text("購入商品一覧"), displayMode: .inline)
+                    .navigationBarItems(
+                        trailing: HStack{
+                            IconView(systemName: "magnifyingglass")
+                            
+                                .padding(.leading, 10)
+                        }
+                            .padding(.bottom, 10)
+                    )
             }
+            .tabItem {
+                IconView(systemName: "house")
+            }
+            .tag(1)
+            RcPostController()
+            // 押された時に呼ばれる　今はアイコンが呼ばれる
+           // IconView(systemName: "plus.app")
+            
+            // 下のアイコン画像
+                .tabItem {
+                    RcPostController()
+                    IconView(systemName: "plus.app")
+                }
+            IconView(systemName: "camera")
+                .tabItem {
+                    IconView(systemName: "camera")
+                }
         }
+        
+        // 選択されているアイコンの色を黒に変更
+        .accentColor(.black)
     }
 }
 
-struct HistoryRowView: View {
-    let historyData: HistoryData
-    @State private var image: UIImage? = nil
+// Iconの形式をそろえる
+struct IconView: View {
+    var systemName: String
     
     var body: some View {
-        HStack {
-            if let image = image {
-                Image(uiImage: image)
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: 100, height: 100)
-            } else {
-                Image(systemName: "photo")
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: 100, height: 100)
-            }
-            VStack(alignment: .leading) {
-                Text(historyData.JANL)
-                Text(historyData.PRODACTNAME)
-                Text("\(historyData.PRICE)")
-            }
-        }
-        .onAppear {
-            loadImage()
-        }
-        .frame(height: 120)
+        Image(systemName: systemName)
+            .font(.title)
     }
-    
-    private func loadImage() {
-        let realm = try! Realm()
-        let id = historyData.ID
-        let realmImage = realm.objects(ImageRealm.self).filter("ID == %@", id)
-        if let historyImage = realmImage.first, let imageData = historyImage.imageData {
-            self.image = UIImage(data: imageData)
-        }
+}
+
+struct ContentView_Previews: PreviewProvider {
+    static var previews: some View {
+        ContentView()
     }
 }

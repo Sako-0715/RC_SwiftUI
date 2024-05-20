@@ -9,7 +9,7 @@ import SwiftUI
 import RealmSwift
 import Alamofire
 
-struct RcHistoryView: View {
+struct RcHistoryController: View {
     // 投稿した履歴が入る配列
     @State private var historyDataArray: [HistoryData] = []
     // API通信するmodel
@@ -142,5 +142,5 @@ struct RcHistoryView: View {
 }
 
 #Preview {
-    RcHistoryView()
+    RcHistoryController()
 }
